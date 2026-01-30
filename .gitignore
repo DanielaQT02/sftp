@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.log
+*.pot
+*.pyc
+env/
+venv/
+.env.local
+sftp_data/
+*.db
+celerybeat-schedule
+.DS_Store

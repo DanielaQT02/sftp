@@ -1,0 +1,82 @@
+services:
+  # Servidor SFTP
+  sftp-server:
+    image: danniquiroz/sftp-server:latest
+    container_name: sftp-server
+    ports:
+      - "2222:22"
+    volumes:
+      - ./sftp_data:/home/sftpuser/upload
+    command: ${SFTP_USER}:${SFTP_PASS}:1001:1001:/upload
+    networks:
+      - sftp-network
+    restart: unless-stopped
+
+  # Redis (broker para Celery)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - sftp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Worker de Celery
+  celery-worker:
+    image: danniquiroz/sftp-celery:latest
+    container_name: celery-worker
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - SFTP_HOST=sftp-server
+      - SFTP_PORT=22
+      - SFTP_USER=${SFTP_USER}
+      - SFTP_PASS=${SFTP_PASS}
+    volumes:
+      - ./app:/app
+      - ./sftp_data:/sftp_data
+    depends_on:
+      redis:
+        condition: service_healthy
+      sftp-server:
+        condition: service_started
+    networks:
+      - sftp-network
+    restart: unless-stopped
+    command: celery -A celery_config worker --loglevel=info --concurrency=4
+
+  # Flower (monitoreo de Celery)
+  flower:
+    image: danniquiroz/sftp-celery:latest
+    container_name: flower
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./app:/app
+    depends_on:
+      - redis
+      - celery-worker
+    networks:
+      - sftp-network
+    restart: unless-stopped
+    command: celery -A celery_config flower --port=5555
+
+networks:
+  sftp-network:
+    driver: bridge
+
+volumes:
+  redis_data:
