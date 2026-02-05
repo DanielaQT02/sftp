@@ -7,6 +7,10 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
+# Crear usuario no-root con UID 1001 (mismo que SFTP)
+RUN groupadd -g 1001 appuser && \
+    useradd -m -u 1001 -g appuser appuser
+
 # Copiar requirements
 COPY app/requirements.txt .
 
@@ -15,6 +19,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código de la aplicación
 COPY app/ .
+
+# Cambiar permisos de /app al usuario appuser
+RUN chown -R appuser:appuser /app && \
+    chmod -R 755 /app
+
+# Cambiar al usuario no-root
+USER appuser
 
 # Comando por defecto (se sobrescribirá en docker-compose)
 CMD ["celery", "-A", "celery_config", "worker", "--loglevel=info"]

@@ -1,8 +1,10 @@
 FROM atmoz/sftp:latest
 
-# Crear directorio para usuarios con permisos correctos
+# Crear estructura de directorios para el usuario SFTP
 RUN mkdir -p /home/sftpuser/upload && \
-    chown -R 1001:1001 /home/sftpuser/upload && \
+    mkdir -p /home/sftpuser/.ssh && \
+    chown -R 1001:1001 /home/sftpuser && \
+    chmod 755 /home/sftpuser && \
     chmod 755 /home/sftpuser/upload
 
 # El contenedor base ya maneja la configuración de usuarios

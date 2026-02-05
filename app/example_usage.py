@@ -41,7 +41,7 @@ print("EJEMPLO 1: Subir archivo al SFTP")
 print_separator()
 
 # Crear un archivo de prueba
-test_file = "/app/test_file.txt"
+test_file = "/sftp_data/test_file.txt"
 with open(test_file, 'w') as f:
     f.write("Este es un archivo de prueba para SFTP\n")
     f.write(f"Creado en: {time.ctime()}\n")
@@ -79,7 +79,7 @@ print_separator()
 
 time.sleep(2)
 
-download_path = "/app/downloaded_file.txt"
+download_path = "/sftp_data/downloaded_file.txt"
 task = celery_app.send_task(
     'tasks.download_file',
     args=['/upload/test_file.txt', download_path]
@@ -97,6 +97,7 @@ if os.path.exists(download_path):
         print(f.read())
 
 # Ejemplo 4: Subir múltiples archivos (batch)
+# Los archivos se ubican en /sftp_data que está sincronizado con el servidor SFTP
 print_separator()
 print("EJEMPLO 4: Batch upload de múltiples archivos")
 print_separator()
@@ -104,7 +105,7 @@ print_separator()
 # Crear varios archivos de prueba
 files_to_upload = []
 for i in range(3):
-    filename = f"/app/batch_file_{i}.txt"
+    filename = f"/sftp_data/batch_file_{i}.txt"
     with open(filename, 'w') as f:
         f.write(f"Archivo batch número {i}\n")
     files_to_upload.append((filename, f'/upload/batch_file_{i}.txt'))
